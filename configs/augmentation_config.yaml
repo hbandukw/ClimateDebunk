@@ -11,6 +11,6 @@ device: "cuda"                        # "cuda" or "cpu" (forces device usage)
 
 # Logging settings
 save_intermediate_splits: true        # Save original KFold splits before augmentation
-log_level: "INFO"                     # Logging level: INFO, DEBUG, WARNING
-save_logs_to_file: true               # Save logs to a file instead of console
+log_level: "WARNING"                     # Logging level: INFO, DEBUG, WARNING
+save_logs_to_file: false               # Save logs to a file instead of console
 log_file_path: "logs/augmentation.log" # Path to store logs if enabled
