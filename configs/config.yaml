@@ -1,2 +1,4 @@
-# Data  
-source: "kaggle" # "comp" or "kaggle"
+
+# Tokenizer
+tokenizer_model : "distilbert-base-uncased"
+max_lenght: 365
