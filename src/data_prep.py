@@ -65,7 +65,7 @@ def encode_data(tokenizer, texts, labels, max_length):
         return None
 
 def main():
-    parser = argparse.ArgumentParser(description="encodes data")
+    parser = argparse.ArgumentParser(description="Created dataloader for pytorch")
     parser.add_argument("--config", type=str, default="configs/config.yaml")
     args = parser.parse_args()
 
@@ -80,4 +80,6 @@ def main():
     val_dataset = encode_data(tokenizer, val_texts, val_labels, config["max_length"])
 
 
+if __name__ == "__main__":
+    main()
     

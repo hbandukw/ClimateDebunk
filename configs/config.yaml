@@ -1,11 +1,19 @@
 
 # Data
 trainpath : ""
-# orignal: https://huggingface.co/datasets/QuotaClimat/frugalaichallenge-text-train
-# augmented & balanced: https://www.kaggle.com/datasets/hbandukw/hf-aug-balanced-train 
 valpath : ""
 
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
 max_length: 365
 
+# Hyperparameters
+learning_rate : 8.509924985836568e-05 
+num_trainable_layers : 4 
+dropout_rate : 0.19553005296446951 
+batch_size : 16 
+epochs : 5 
+step_size : 4 
+gamma : 0.8523421613311146 
+
+# Model training
