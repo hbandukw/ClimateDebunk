@@ -1,4 +1,11 @@
 
+# Data
+trainpath : ""
+# orignal: https://huggingface.co/datasets/QuotaClimat/frugalaichallenge-text-train
+# augmented & balanced: https://www.kaggle.com/datasets/hbandukw/hf-aug-balanced-train 
+valpath : ""
+
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
-max_lenght: 365
+max_length: 365
+

@@ -1,6 +1,8 @@
 # Data
-train : "/kaggle/input/balancedfull/" # 5 csv files created with scripts/augment_train.py
-test : "/kaggle/input/test-parquet/test-00000-of-00001.parquet" # validation set provided by HF
+trainpath : "/kaggle/input/HF_aug_balanced_train/aug_balanced_train.csv" 
+# orignal: https://huggingface.co/datasets/QuotaClimat/frugalaichallenge-text-train
+# augmented & balanced: https://www.kaggle.com/datasets/hbandukw/hf-aug-balanced-train 
+valpath : "/kaggle/input/test-parquet/test-00000-of-00001.parquet" # validation set provided by HF
 
 
 device : "cuda"

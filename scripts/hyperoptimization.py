@@ -17,32 +17,29 @@ import shutil
 import zipfile
 import yaml
 
+from src.data_prep import read_train_data, read_val_data
+
 # Load configuration
 def load_config(config_path="configs/hyperoptim_config.yaml"):
     """Loads YAML configuration file."""
     with open(config_path, "r") as file:
         return yaml.safe_load(file)
 
-def read_train_data(trainpath):
-    texts = []
-    labels = []
-    for i in range(5):
-        df = pd.read_csv(f"{trainpath}/df_balanced{i}.csv")
-        texts.append(df['quote'])
-        labels.append(df['numeric_label'])
-    
-    texts_combined = pd.concat(texts, ignore_index=True)
-    labels_combined = pd.concat(labels, ignore_index=True)
 
-    return texts_combined, labels_combined
+def setup_model_for_hyperopt(num_trainable_layers, dropout_rate):
+    config = DistilBertConfig.from_pretrained(
+        'distilbert-base-uncased',
+        num_labels=8,
+        dropout=dropout_rate,
+        attention_dropout=dropout_rate
+    )
+    model = DistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased', config=config)
+    for name, param in model.named_parameters():
+        param.requires_grad = False
+    for layer_idx in range(6 - num_trainable_layers, 6):
+        for name, param in model.distilbert.transformer.layer[layer_idx].named_parameters():
+            param.requires_grad = True
+    for name, param in model.classifier.named_parameters():
+        param.requires_grad = True
+    return model
 
-def read_val_data(valpath):
-    df = pd.read_parquet(valpath)
-    df['label_int'] = df['label'].str.split("_").str[0].astype('int')
-
-    texts = df["quote"].to_list()
-    labels = df["label_int"].to_list()
-
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
