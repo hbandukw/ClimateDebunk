@@ -1,11 +1,18 @@
 
 # Data
-trainpath : ""
-valpath : ""
+trainpath : "path/to/train/data"
+valpath : "path/to/val/data"
+testpath: "path/to/test/data"
+class_col: "class_col"
 
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
 max_length: 365
+
+# Model
+model_name: "distilbert-base-uncased"
+total_layers: 6
+num_labels: 8
 
 # Hyperparameters
 learning_rate : 8.509924985836568e-05 
@@ -16,4 +23,5 @@ epochs : 5
 step_size : 4 
 gamma : 0.8523421613311146 
 
-# Model training
+# Output
+output_dir : "path/to/output"
