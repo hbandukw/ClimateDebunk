@@ -1,7 +1,6 @@
 # Script used to create the augmented dataset: https://www.kaggle.com/datasets/rafechang/balancedfull
 # Usage: python scripts/augment_data.py
 
-
 import os
 import re
 import yaml
@@ -23,15 +22,6 @@ def extract_number(label):
     match = re.match(r"(\d+)_", label)
     return int(match.group(1)) if match else None
 
-# Setup logging
-def setup_logging(log_level, save_to_file, log_file_path):
-    """Configures logging settings."""
-    log_format = "%(asctime)s - %(levelname)s - %(message)s"
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper(), "INFO"),
-        format=log_format,
-        handlers=[logging.FileHandler(log_file_path)] if save_to_file else [logging.StreamHandler()]
-    )
 
 def balance_dataset(df, label_column, text_column, augmenter):
     """
@@ -75,11 +65,7 @@ def main():
     
     # Load config
     config = load_config(args.config)
-
-    # Setup logging
-    setup_logging(config["log_level"], config["save_logs_to_file"], config["log_file_path"])
     
-    logging.info("Loading dataset from: %s", config["data_path"])
     df = pd.read_parquet(config["data_path"])
 
     # Extract numeric labels
@@ -87,7 +73,6 @@ def main():
 
     # Set device
     device = config["device"] if config["device"] in ["cuda", "cpu"] else ("cuda" if torch.cuda.is_available() else "cpu")
-    logging.info("Using device: %s", device)
 
     # Define augmentation model
     augmenter = naw.ContextualWordEmbsAug(
@@ -111,12 +96,6 @@ def main():
 
         subset.to_csv(subset_path, index=False)
         balanced_subset.to_csv(balanced_path, index=False)
-
-        logging.info("Saved: %s & %s", subset_path, balanced_path)
-
-    if config["save_intermediate_splits"]:
-        logging.info("Intermediate KFold splits saved.")
-    
     
 
 if __name__ == "__main__":
