@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import torch
 from unittest.mock import patch, MagicMock
-from src.inference import load_test_data, test_model
+from scripts.inference import load_test_data, test_model
 from transformers import DistilBertTokenizer
 
 # Sample data for testing

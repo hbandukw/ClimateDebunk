@@ -1,10 +1,6 @@
 import os
 import torch
-from torch.optim import AdamW, lr_scheduler
-from .model import load_model
-from .data_prep import create_trainloader, create_valloader
-from .utils import plot_loss, plot_accuracy, calculate_f1_score
-from . import config
+from utils import calculate_f1_score
 
 def train_one_epoch(model, train_loader, optimizer, device):
     model.train()
@@ -53,55 +49,3 @@ def validate_model(model, val_loader, device):
     accuracy = correct_val / total_val
     f1 = calculate_f1_score(all_val_labels, all_val_preds)
     return average_val_loss, accuracy, f1
-
-
-def main():
-    model = load_model()
-    optimizer = AdamW(model.parameters(), lr=config['learning_rate'])
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=config['step_size'], gamma=config['gamma'])
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
-    train_loader = create_trainloader(config["trainpath"], 
-                                      config["class_col"],
-                                      config['tokenizer_model'],
-                                      config['max_length'],
-                                      config['batch_size'],
-                                      shuffle=True)
-    
-
-    val_loader = create_valloader(config["valpath"], 
-                                  config["class_col"],
-                                  config['tokenizer_model'],
-                                  config['max_length'],
-                                  config['batch_size'],
-                                  shuffle=False) 
-
-    train_losses = []
-    val_losses = []
-    train_accuracies = []
-    val_accuracies = []
-    train_f1_scores = []
-    val_f1_scores = []
-
-    for epoch in range(config['epochs']):
-        train_loss, train_accuracy, train_f1 = train_one_epoch(model, train_loader, optimizer, device)
-        val_loss, val_accuracy, val_f1 = validate_model(model, val_loader, device)
-        train_losses.append(train_loss)
-        val_losses.append(val_loss)
-        train_accuracies.append(train_accuracy)
-        val_accuracies.append(val_accuracy)
-        train_f1_scores.append(train_f1)
-        val_f1_scores.append(val_f1)
-        print(f"Epoch {epoch+1}/{config['epochs']}, Train Loss: {train_loss}, Train Accuracy: {train_accuracy}, Train F1: {train_f1}, Val Loss: {val_loss}, Val Accuracy: {val_accuracy}, Val F1: {val_f1}")
-
-    plot_loss(train_losses, val_losses, config['epochs'])
-    plot_accuracy(train_accuracies, val_accuracies, config['epochs'])
-    
-    # Save the trained model
-    torch.save(model.state_dict(), config['trained_model_path'])
-    print(f"Model saved as {config['trained_model_path']}")
-
-if __name__ == "__main__":
-    main()

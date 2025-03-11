@@ -1,7 +1,7 @@
 import pytest
 import torch
 from unittest.mock import patch, MagicMock
-from src.train import main, train_one_epoch, validate_model
+from scripts.train import main, train_one_epoch, validate_model
 from src.model import load_model
 from src.data_prep import create_data_loaders
 from torch.optim import AdamW, lr_scheduler

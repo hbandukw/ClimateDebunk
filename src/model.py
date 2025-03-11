@@ -1,8 +1,6 @@
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, DistilBertConfig
-import torch
-from . import config
+from transformers import DistilBertForSequenceClassification, DistilBertConfig
 
-def load_model():
+def load_model(config):
     """Loads and returns the DistilBERT model with the specified configuration."""
     model_config = DistilBertConfig.from_pretrained(
         config['model_name'],

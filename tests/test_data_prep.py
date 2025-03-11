@@ -60,3 +60,12 @@ def test_create_data_loaders(mock_tokenizer, mock_read_data):
     train_loader, val_loader = create_data_loaders(sample_csv_data, sample_parquet_data)
     assert len(train_loader.dataset) == len(sample_csv_data)
     assert len(val_loader.dataset) == len(sample_parquet_data)
+
+def test_read_data_invalid_file():
+    with pytest.raises(ValueError, match="Unsupported file type. Only CSV and Parquet are supported."):
+        read_data('sample.txt', 'class_col')
+
+def test_read_data_missing_column(mocker):
+    mocker.patch('pandas.read_csv', return_value=sample_csv_data.drop(columns=['class_col']))
+    with pytest.raises(RuntimeError, match="Error reading data from sample.csv: 'class_col'"):
+        read_data('sample.csv', 'class_col')

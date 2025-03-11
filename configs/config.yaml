@@ -1,9 +1,15 @@
 
-# Data
-trainpath : "path/to/train/data"
-valpath : "path/to/val/data"
-testpath: "path/to/test/data"
-class_col: "class_col" # y
+# Training Data   - either augmented data or raw data from HF
+trainpath : "data/train/aug_balanced_train.csv" # training data 
+train_label_col: "numeric_label"
+
+# Validation data for evaluation during training
+valpath : "data/valid/test-00000-of-00001.parquet" # validation data
+val_label_col: "label"
+
+# Test data for inference
+testpath: "path/to/test/data"  # unseen data
+test_label_col: "label" 
 
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
@@ -24,5 +30,5 @@ step_size : 4
 gamma : 0.8523421613311146 
 
 # Output
-output_dir : "path/to/output"
-trained_model_path : "path/to/saved/model"
+output_dir : "output"
+trained_model_path : "climatedebunkwithbert.pth"
