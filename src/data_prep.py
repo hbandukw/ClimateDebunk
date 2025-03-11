@@ -46,19 +46,11 @@ def encode_data(tokenizer, texts, labels, max_length):
         print(f"Error during tokenization: {e}")
         return None
 
-def create_data_loaders():
-    """Creates and returns DataLoader for PyTorch."""
-    train_data = read_data(config["trainpath"], config["class_col"])
-    val_data = read_data(config["valpath"], config["class_col"])
+def create_data_loader(filepath, label_column, tokenizer_model, max_length, batch_size, shuffle : bool):
+    data = read_data(filepath, label_column)
+    tokenizer = DistilBertTokenizer.from_pretrained(tokenizer_model, do_lower_case=True)
+    dataset = encode_data(tokenizer, data['quote'], data['numeric_label'], max_length)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
 
-    tokenizer = DistilBertTokenizer.from_pretrained(config["tokenizer_model"], do_lower_case=True)
+    return dataloader
 
-    train_dataset = encode_data(tokenizer, train_data['quote'], train_data['numeric_label'], config["max_length"])
-    val_dataset = encode_data(tokenizer, val_data['quote'], val_data['numeric_label'], config["max_length"])
-
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False)
-
-    return train_loader, val_loader
-
-    

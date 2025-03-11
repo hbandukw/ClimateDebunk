@@ -1,7 +1,8 @@
+import os
 import torch
 from torch.optim import AdamW, lr_scheduler
 from .model import load_model
-from .data_prep import create_data_loaders
+from .data_prep import create_trainloader, create_valloader
 from .utils import plot_loss, plot_accuracy, calculate_f1_score
 from . import config
 
@@ -62,7 +63,20 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    train_loader, val_loader = create_data_loaders()
+    train_loader = create_trainloader(config["trainpath"], 
+                                      config["class_col"],
+                                      config['tokenizer_model'],
+                                      config['max_length'],
+                                      config['batch_size'],
+                                      shuffle=True)
+    
+
+    val_loader = create_valloader(config["valpath"], 
+                                  config["class_col"],
+                                  config['tokenizer_model'],
+                                  config['max_length'],
+                                  config['batch_size'],
+                                  shuffle=False) 
 
     train_losses = []
     val_losses = []
@@ -84,6 +98,10 @@ def main():
 
     plot_loss(train_losses, val_losses, config['epochs'])
     plot_accuracy(train_accuracies, val_accuracies, config['epochs'])
-   
+    
+    # Save the trained model
+    torch.save(model.state_dict(), config['trained_model_path'])
+    print(f"Model saved as {config['trained_model_path']}")
+
 if __name__ == "__main__":
     main()

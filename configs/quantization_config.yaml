@@ -1,0 +1,2 @@
+onnx_path: "distilbert_model.onnx"
+quantized_onnx_path : "distilbert_quantized.onnx"

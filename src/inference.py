@@ -1,5 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
+import numpy as np
 from transformers import DistilBertTokenizer
 import pandas as pd
 from .model import load_model
@@ -16,7 +17,6 @@ def load_test_data(testpath: str):
     else:
         raise ValueError("Unsupported file type. Only CSV and Parquet are supported.")
     return test['quote'], test['numeric_label']
-
 
 
 def test_model(model, test_loader, device):
@@ -41,8 +41,10 @@ def test_model(model, test_loader, device):
     f1 = calculate_f1_score(all_test_labels, all_test_preds)
     return average_test_loss, accuracy, f1, all_test_labels, all_test_preds
 
+
 def main():
-    model = load_model()
+    model = load_model() 
+    model.load_state_dict(torch.load(config["trained_model_path"], map_location=torch.device("cpu")))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 

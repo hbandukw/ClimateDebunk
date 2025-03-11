@@ -2,7 +2,7 @@ from transformers import DistilBertTokenizer, DistilBertForSequenceClassificatio
 import torch
 from . import config
 
-def load_model(num_trainable_layers, dropout_rate):
+def load_model():
     """Loads and returns the DistilBERT model with the specified configuration."""
     model_config = DistilBertConfig.from_pretrained(
         config['model_name'],
@@ -10,7 +10,7 @@ def load_model(num_trainable_layers, dropout_rate):
         dropout=config['dropout_rate'],
         attention_dropout=config['dropout_rate']
     )
-       
+   
     model = DistilBertForSequenceClassification.from_pretrained(config['model_name'], config=model_config)
     
     # Freeze all layers

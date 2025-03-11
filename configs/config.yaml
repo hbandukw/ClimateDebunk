@@ -3,7 +3,7 @@
 trainpath : "path/to/train/data"
 valpath : "path/to/val/data"
 testpath: "path/to/test/data"
-class_col: "class_col"
+class_col: "class_col" # y
 
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
@@ -25,3 +25,4 @@ gamma : 0.8523421613311146
 
 # Output
 output_dir : "path/to/output"
+trained_model_path : "path/to/saved/model"
