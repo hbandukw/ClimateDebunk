@@ -74,9 +74,10 @@ conda activate climate_debunk
 ```
 
 3. Test
+From the root directory, run the following command:
 
 ```bash 
-pytest tests
+pytest tests/
 ```
 
 ## Usage
