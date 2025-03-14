@@ -73,7 +73,7 @@ conda env create -f environment.yml
 conda activate climate_debunk
 ```
 
-3. Test
+3. To ensure that the functions are working as expected, run the tests.
 From the root directory, run the following command:
 
 ```bash 
