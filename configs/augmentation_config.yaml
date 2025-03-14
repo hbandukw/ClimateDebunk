@@ -1,6 +1,6 @@
 # Data settings
-data_path: "data/raw/train.parquet"   # Path to the input dataset
-output_dir: "data/augmented"          # Directory to save augmented data
+data_path: "data/train/raw/train.parquet"   # Path to the input dataset
+output_dir: "data/train/augmented"          # Directory to save augmented data
 n_splits: 5                           # Number of K-Fold splits
 random_seed: 42                       # Ensures reproducibility
 
@@ -9,8 +9,5 @@ augmenter_model: "bert-base-uncased"  # NLP model for augmentation
 augment_action: "substitute"          # Augmentation type (substitute, insert, delete)
 device: "cuda"                        # "cuda" or "cpu" (forces device usage)
 
-# Logging settings
-save_intermediate_splits: true        # Save original KFold splits before augmentation
-log_level: "WARNING"                     # Logging level: INFO, DEBUG, WARNING
-save_logs_to_file: false               # Save logs to a file instead of console
-log_file_path: "logs/augmentation.log" # Path to store logs if enabled
+save_intermediate_files: False        # Save intermediate files (True/False)
+

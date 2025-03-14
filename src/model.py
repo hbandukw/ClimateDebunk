@@ -1,4 +1,5 @@
-from transformers import DistilBertForSequenceClassification, DistilBertConfig
+import torch
+from transformers import DistilBertConfig, DistilBertForSequenceClassification
 
 def load_model(config):
     """Loads and returns the DistilBERT model with the specified configuration."""
@@ -25,3 +26,30 @@ def load_model(config):
         param.requires_grad = True
 
     return model
+
+
+def load_model_for_inference(config, device):
+    """Loads and returns the DistilBERT model for inference with trained weights."""
+    
+    # Load model configuration
+    model_config = DistilBertConfig.from_pretrained(
+        config['model_name'],
+        num_labels=config['num_labels']
+    )
+
+    # Initialize model
+    model = DistilBertForSequenceClassification.from_pretrained(config['model_name'], config=model_config)
+
+    # Load trained weights
+    model.load_state_dict(torch.load(config['trained_model_path'], map_location=torch.device(device)))  
+
+    # Freeze all layers to avoid unnecessary computation
+    for param in model.parameters():
+        param.requires_grad = False
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    return model
+
+

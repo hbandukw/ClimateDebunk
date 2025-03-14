@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from sklearn.metrics import confusion_matrix, f1_score, precision_recall_curve, roc_curve, auc
 
 def plot_loss(train_losses, val_losses, epochs):

@@ -1,31 +1,26 @@
-# Data
-trainpath : "/kaggle/input/hf-frugal-ai-datasets/aug_balanced_train.csv" 
-valpath : "/kaggle/input/hf-frugal-ai-datasets/test-00000-of-00001.parquet" 
-
-
-device : "cuda"
-
 # hyperparams to optimize
-hyperparameters:
-  learning_rate:
-    type: float
-    range: [1e-5, 1e-3]
-    log: true
-  num_trainable_layers:
-    type: int
-    range: [1, 6]
-  dropout_rate:
-    type: float
-    range: [0.1, 0.5]
-  batch_size:
-    type: categorical
-    values: [16, 32, 64]
-  epochs:
-    type: int
-    range: [2, 5]
-  step_size:
-    type: int
-    range: [1, 10]
-  gamma:
-    type: float
-    range: [0.1, 0.9]
+
+learning_rate:
+  type: float
+  range: [1e-5, 1e-3]
+  log: True
+num_trainable_layers:
+  type: int
+  range: [1, 6]
+dropout_rate:
+  type: float
+  range: [0.1, 0.5]
+batch_size:
+  type: categorical
+  values: [16, 32, 64]
+epochs:
+  type: int
+  range: [2, 5]
+step_size:
+  type: int
+  range: [1, 10]
+gamma:
+  type: float
+  range: [0.1, 0.9]
+
+num_trials : 20

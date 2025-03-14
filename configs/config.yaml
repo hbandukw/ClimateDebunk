@@ -9,7 +9,8 @@ val_label_col: "label"
 
 # Test data for inference
 testpath: "path/to/test/data"  # unseen data
-test_label_col: "label" 
+test_label_col: "label"
+trained_model_path: "models/climatedebunkwithbert.pth" # can be changed to another path in the repo  
 
 # Tokenizer
 tokenizer_model : "distilbert-base-uncased"
@@ -31,4 +32,4 @@ gamma : 0.8523421613311146
 
 # Output
 output_dir : "output"
-trained_model_path : "climatedebunkwithbert.pth"
+trained_model_path : "models/climatedebunkwithbert.pth"
