@@ -51,7 +51,7 @@ ClimateDebunk/
 │   ├── test_model.py
 │   ├── test_quantize.py
 │   ├── test_train.py
-│   └── test_titls.py      # (Note: Typo in filename, likely meant "test_utils.py")
+│   └── test_utitls.py      
 ├── environment.yml        # Conda environment file
 └── README.md              # Project documentation
 ```
