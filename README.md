@@ -16,6 +16,7 @@ The original training and validation datasets as well as the augmented data can 
 We used a pretrained [DistilBERT](https://huggingface.co/docs/transformers/v4.49.0/en/model_doc/distilbert#transformers.DistilBertForSequenceClassification) model for sequence classification and fine-tuned it using our augmented dataset. We incorporated a learning rate scheduler, applied regularization techniques, and performed hyperparameter tuning to improve the model's performance achieving an accuracy of 95% on the validation set. Given the high accuracy, we acknowledge that the model is overfitting on the training data.
 
 ## Repository Structure
+```
 ClimateDebunk/
 ├── configs/               # Configuration files
 │   ├── augmentation_config.yaml
@@ -53,6 +54,7 @@ ClimateDebunk/
 │   └── test_titls.py      # (Note: Typo in filename, likely meant "test_utils.py")
 ├── environment.yml        # Conda environment file
 └── README.md              # Project documentation
+```
 
 ## Set up
 To set up the project, follow these steps:
