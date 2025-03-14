@@ -169,3 +169,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# VS Code files
+.vscode/
+
+# Data files
+data/
+
+# Models
+models/ 

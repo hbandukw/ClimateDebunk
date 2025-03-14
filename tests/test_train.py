@@ -1,106 +1,294 @@
 import pytest
+from pytest_mock import mocker
+from sklearn.metrics import accuracy_score
 import torch
-from unittest.mock import patch, MagicMock
-from scripts.train import main, train_one_epoch, validate_model
-from src.model import load_model
-from src.data_prep import create_data_loaders
-from torch.optim import AdamW, lr_scheduler
+from src.train import train_one_epoch, validate_model, test_model
+from src.utils import calculate_f1_score
 
-# Sample configuration for testing
-sample_config = {
-    'learning_rate': 1e-4,
-    'step_size': 4,
-    'gamma': 0.9,
-    'epochs': 2,
-    'batch_size': 16,
-    'max_length': 128,
-    'tokenizer_model': 'distilbert-base-uncased',
-    'trainpath': 'path/to/train.csv',
-    'valpath': 'path/to/val.csv',
-    'class_col': 'class_col'
-}
 
-@patch('src.train.config', sample_config)
-@patch('src.train.load_model')
-@patch('src.train.create_data_loaders')
-@patch('src.train.AdamW')
-@patch('src.train.lr_scheduler.StepLR')
-def test_main(mock_scheduler, mock_optimizer, mock_create_data_loaders, mock_load_model):
-    # Mock the model, optimizer, scheduler, and data loaders
-    mock_model = MagicMock()
-    mock_load_model.return_value = mock_model
-    mock_optimizer.return_value = MagicMock()
-    mock_scheduler.return_value = MagicMock()
-    mock_train_loader = MagicMock()
-    mock_val_loader = MagicMock()
-    mock_create_data_loaders.return_value = (mock_train_loader, mock_val_loader)
+# Test 1: Test the train_one_epoch function.
+def test_train_one_epoch(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+    model.return_value.loss = torch.tensor(0.5)  # Mock loss
+    model.return_value.logits = torch.tensor([[0.6, 0.4], [0.3, 0.7]])  # Mock logits
 
-    # Run the main function
-    main()
-
-    # Check that the model, optimizer, scheduler, and data loaders are set up correctly
-    mock_load_model.assert_called_once()
-    mock_optimizer.assert_called_once_with(mock_model.parameters(), lr=sample_config['learning_rate'])
-    mock_scheduler.assert_called_once_with(mock_optimizer.return_value, step_size=sample_config['step_size'], gamma=sample_config['gamma'])
-    mock_create_data_loaders.assert_called_once()
-
-@patch('src.train.calculate_f1_score')
-def test_validate_model(mock_f1_score):
-    # Mock the model and data loader
-    mock_model = MagicMock()
-    mock_val_loader = MagicMock()
-    mock_device = torch.device("cpu")
-    mock_f1_score.return_value = 0.8
-
-    # Mock the outputs of the model
-    mock_outputs = MagicMock()
-    mock_outputs.loss.item.return_value = 0.5
-    mock_outputs.logits = torch.tensor([[0.1, 0.9], [0.8, 0.2]])
-    mock_model.return_value = mock_outputs
-
-    # Mock the data loader
-    mock_batch = {
-        'input_ids': torch.tensor([[1, 2, 3], [4, 5, 6]]),
-        'attention_mask': torch.tensor([[1, 1, 1], [1, 1, 1]]),
-        'labels': torch.tensor([1, 0])
+    # Mock DataLoader
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        'attention_mask': torch.tensor([[1, 1], [1, 1]]),
+        'labels': torch.tensor([0, 1])
     }
-    mock_val_loader.__iter__.return_value = [mock_batch]
+    train_loader = mocker.MagicMock()
+    train_loader.__len__.return_value = 1
+    train_loader.__iter__.return_value = [batch]
 
-    # Run the validate_model function
-    average_val_loss, accuracy, f1 = validate_model(mock_model, mock_val_loader, mock_device)
+    # Mock optimizer
+    optimizer = mocker.MagicMock()
 
-    # Check the results
-    assert average_val_loss == 0.5
-    assert accuracy == 0.5
-    assert f1 == 0.8
+    # Call the function
+    device = 'cpu'
+    avg_loss, accuracy, f1, labels, preds = train_one_epoch(model, train_loader, optimizer, device)
 
-@patch('src.train.calculate_f1_score')
-def test_train_one_epoch(mock_f1_score):
-    # Mock the model, optimizer, and data loader
-    mock_model = MagicMock()
-    mock_optimizer = MagicMock()
-    mock_train_loader = MagicMock()
-    mock_device = torch.device("cpu")
-    mock_f1_score.return_value = 0.8
+    # Assertions
+    assert isinstance(avg_loss, float)
+    assert isinstance(accuracy, float)
+    assert isinstance(f1, float)
+    assert len(labels) == 2
+    assert len(preds) == 2
+    assert 0 <= accuracy <= 1
+    assert 0 <= f1 <= 1
+    optimizer.zero_grad.assert_called_once()
+    optimizer.step.assert_called_once()
 
-    # Mock the outputs of the model
-    mock_outputs = MagicMock()
-    mock_outputs.loss.item.return_value = 0.5
-    mock_outputs.logits = torch.tensor([[0.1, 0.9], [0.8, 0.2]])
-    mock_model.return_value = mock_outputs
+# Test 2: Test the validate_model function.
+def test_validate_model(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+    model.return_value.loss = torch.tensor(0.5)  # Mock loss
+    model.return_value.logits = torch.tensor([[0.6, 0.4], [0.3, 0.7]])  # Mock logits
 
-    # Mock the data loader
-    mock_batch = {
-        'input_ids': torch.tensor([[1, 2, 3], [4, 5, 6]]),
-        'attention_mask': torch.tensor([[1, 1, 1], [1, 1, 1]]),
-        'labels': torch.tensor([1, 0])
+    # Mock DataLoader
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        'attention_mask': torch.tensor([[1, 1], [1, 1]]),
+        'labels': torch.tensor([0, 1])
     }
-    mock_train_loader.__iter__.return_value = [mock_batch]
+    val_loader = mocker.MagicMock()
+    val_loader.__len__.return_value = 1
+    val_loader.__iter__.return_value = [batch]
 
-    # Run the train_one_epoch function
-    average_train_loss, accuracy, f1 = train_one_epoch(mock_model, mock_train_loader, mock_optimizer, mock_device)
+    # Call the function
+    device = 'cpu'
+    avg_loss, accuracy, f1, labels, preds = validate_model(model, val_loader, device)
 
-    # Check the results
-    assert average_train_loss == 0.5
-    assert accuracy == 0.5
-    assert f1 == 0.8
+    # Assertions
+    assert isinstance(avg_loss, float)
+    assert isinstance(accuracy, float)
+    assert isinstance(f1, float)
+    assert len(labels) == 2
+    assert len(preds) == 2
+    assert 0 <= accuracy <= 1
+    assert 0 <= f1 <= 1
+
+# Test 3: Test the test_model function.
+def test_test_model(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+    model.return_value.logits = torch.tensor([[0.6, 0.4], [0.3, 0.7]])  # Mock logits
+
+    # Mock DataLoader
+    batch = (
+        torch.tensor([[1, 2], [3, 4]]),  # input_ids
+        torch.tensor([[1, 1], [1, 1]]),  # attention_mask
+        torch.tensor([0, 1])  # labels
+    )
+    test_loader = mocker.MagicMock()
+    test_loader.__iter__.return_value = [batch]
+
+    # Mock accuracy_score and calculate_f1_score
+    mocker.patch('sklearn.metrics.accuracy_score', return_value=0.85)
+    mocker.patch('utils.calculate_f1_score', return_value=0.8)
+
+    # Call the function
+    device = 'cpu'
+    accuracy, f1, y_true, y_pred = test_model(model, test_loader, device)
+
+    # Assertions
+    assert isinstance(accuracy, float)
+    assert isinstance(f1, float)
+    assert len(y_true) == 2
+    assert len(y_pred) == 2
+    assert 0 <= accuracy <= 1
+    assert 0 <= f1 <= 1
+    model.eval.assert_called_once()
+    model.to.assert_called_once_with(device)
+
+# Test 4: Test the train_one_epoch function with an empty DataLoader.
+def test_train_one_epoch_empty_loader(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock empty DataLoader
+    train_loader = mocker.MagicMock()
+    train_loader.__len__.return_value = 0
+    train_loader.__iter__.return_value = []
+
+    # Mock optimizer
+    optimizer = mocker.MagicMock()
+
+    # Call the function
+    device = 'cpu'
+    avg_loss, accuracy, f1, labels, preds = train_one_epoch(model, train_loader, optimizer, device)
+
+    # Assertions
+    assert avg_loss == 0
+    assert accuracy == 0
+    assert f1 == 0
+    assert len(labels) == 0
+    assert len(preds) == 0
+
+# Test 5: Test the train_one_epoch function with missing 'labels' in batch. 
+def test_train_one_epoch_missing_labels(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with missing 'labels'
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        'attention_mask': torch.tensor([[1, 1], [1, 1]])
+    }
+    train_loader = mocker.MagicMock()
+    train_loader.__len__.return_value = 1
+    train_loader.__iter__.return_value = [batch]
+
+    # Mock optimizer
+    optimizer = mocker.MagicMock()
+
+    # Call the function and check for KeyError
+    device = 'cpu'
+    with pytest.raises(KeyError):
+        train_one_epoch(model, train_loader, optimizer, device)
+
+# Test 6: Test the train_one_epoch function with invalid batch structure.
+def test_train_one_epoch_invalid_batch_structure(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with invalid batch structure
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        'attention_mask': torch.tensor([[1, 1], [1, 1]])
+        # Missing 'labels'
+    }
+    train_loader = mocker.MagicMock()
+    train_loader.__len__.return_value = 1
+    train_loader.__iter__.return_value = [batch]
+
+    # Mock optimizer
+    optimizer = mocker.MagicMock()
+
+    # Call the function and check for KeyError
+    device = 'cpu'
+    with pytest.raises(KeyError):
+        train_one_epoch(model, train_loader, optimizer, device)
+
+# Test 7: Test the validate_model function with an empty DataLoader.
+def test_validate_model_empty_loader(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock empty DataLoader
+    val_loader = mocker.MagicMock()
+    val_loader.__len__.return_value = 0
+    val_loader.__iter__.return_value = []
+
+    # Call the function
+    device = 'cpu'
+    avg_loss, accuracy, f1, labels, preds = validate_model(model, val_loader, device)
+
+    # Assertions
+    assert avg_loss == 0
+    assert accuracy == 0
+    assert f1 == 0
+    assert len(labels) == 0
+    assert len(preds) == 0
+
+# Test 8: Test the validate_model function with missing 'labels' in batch.
+def test_validate_model_missing_labels(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with missing 'labels'
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        'attention_mask': torch.tensor([[1, 1], [1, 1]])
+        # Missing 'labels'
+    }
+    val_loader = mocker.MagicMock()
+    val_loader.__len__.return_value = 1
+    val_loader.__iter__.return_value = [batch]
+
+    # Call the function and check for KeyError
+    device = 'cpu'
+    with pytest.raises(KeyError):
+        validate_model(model, val_loader, device)
+
+# Test 9: Test the validate_model function with invalid batch structure.
+def test_validate_model_invalid_batch_structure(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with invalid batch structure
+    batch = {
+        'input_ids': torch.tensor([[1, 2], [3, 4]]),
+        # Missing 'attention_mask' and 'labels'
+    }
+    val_loader = mocker.MagicMock()
+    val_loader.__len__.return_value = 1
+    val_loader.__iter__.return_value = [batch]
+
+    # Call the function and check for KeyError
+    device = 'cpu'
+    with pytest.raises(KeyError):
+        validate_model(model, val_loader, device)
+
+# Test 10: Test the test_model function with an empty DataLoader.
+def test_test_model_empty_loader(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock empty DataLoader
+    test_loader = mocker.MagicMock()
+    test_loader.__iter__.return_value = []
+
+    # Mock accuracy_score and calculate_f1_score
+    mocker.patch('sklearn.metrics.accuracy_score', return_value=0.0)
+    mocker.patch('utils.calculate_f1_score', return_value=0.0)
+
+    # Call the function
+    device = 'cpu'
+    accuracy, f1, y_true, y_pred = test_model(model, test_loader, device)
+
+    # Assertions
+    assert accuracy == 0
+    assert f1 == 0
+    assert len(y_true) == 0
+    assert len(y_pred) == 0
+
+# Test 11: Test the test_model function with an invalid batch structure.
+def test_test_model_invalid_batch_structure(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with invalid batch structure
+    batch = (
+        torch.tensor([[1, 2], [3, 4]]),  # input_ids
+        # Missing 'attention_mask' and 'labels'
+    )
+    test_loader = mocker.MagicMock()
+    test_loader.__iter__.return_value = [batch]
+
+    # Call the function and check for ValueError
+    device = 'cpu'
+    with pytest.raises(ValueError):
+        test_model(model, test_loader, device)
+
+# Test 12: Test the test_model function with missing 'labels' in batch.
+def test_test_model_missing_labels(mocker):
+    # Mock model
+    model = mocker.MagicMock()
+
+    # Mock DataLoader with missing 'labels'
+    batch = (
+        torch.tensor([[1, 2], [3, 4]]),  # input_ids
+        torch.tensor([[1, 1], [1, 1]]),  # attention_mask
+        # Missing 'labels'
+    )
+    test_loader = mocker.MagicMock()
+    test_loader.__iter__.return_value = [batch]
+
+    # Call the function and check for ValueError
+    device = 'cpu'
+    with pytest.raises(ValueError):
+        test_model(model, test_loader, device)

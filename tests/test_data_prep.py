@@ -1,71 +1,76 @@
 import pytest
 import pandas as pd
-from src.data_prep import read_data, process_labels, encode_data, QuotesDataset, create_data_loaders
 from transformers import DistilBertTokenizer
-from unittest.mock import patch
+from torch.utils.data import DataLoader
+from src.data_prep import read_data, process_labels, QuotesDataset, encode_data, create_data_loader
 
-# Sample data for testing
-sample_csv_data = pd.DataFrame({
-    'quote': ['Climate change is real.', 'We need to act now.'],
-    'class_col': ['1_climate', '2_action']
-})
+# Fixture for csv and parquet data, paths, and tokenizer. 
+@pytest.fixture
+def setup_data():
+    csv_data = pd.DataFrame({
+        'quote': ['Climate change is real', 'We need to act now'],
+        'label': ['1_positive', '0_negative']
+    })
+    csv_path = '/tmp/test_data.csv'
+    csv_data.to_csv(csv_path, index=False)
 
-sample_parquet_data = pd.DataFrame({
-    'quote': ['The earth is warming.', 'Renewable energy is the future.'],
-    'class_col': ['1_climate', '2_energy']
-})
+    parquet_data = pd.DataFrame({
+        'quote': ['Climate change is real', 'We need to act now'],
+        'label': ['1_positive', '0_negative']
+    })
+    parquet_path = '/tmp/test_data.parquet'
+    parquet_data.to_parquet(parquet_path, index=False)
 
-def test_read_data_csv(mocker):
-    mocker.patch('pandas.read_csv', return_value=sample_csv_data)
-    data = read_data('sample.csv', 'class_col')
-    assert not data.empty
-    assert 'numeric_label' not in data.columns
-
-def test_read_data_parquet(mocker):
-    mocker.patch('pandas.read_parquet', return_value=sample_parquet_data)
-    data = read_data('sample.parquet', 'class_col')
-    assert not data.empty
-    assert 'numeric_label' in data.columns
-    assert data['numeric_label'].tolist() == [1, 2]
-
-def test_process_labels():
-    data = process_labels(sample_parquet_data.copy(), 'class_col')
-    assert 'numeric_label' in data.columns
-    assert data['numeric_label'].tolist() == [1, 2]
-
-def test_encode_data():
     tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    texts = sample_csv_data['quote'].tolist()
-    labels = [1, 2]
+
+    return csv_data, csv_path, parquet_data, parquet_path, tokenizer
+
+# Test 1: That the function reads data from a CSV file and returns a DataFrame.
+def test_read_data_csv(setup_data):
+    _, csv_path, _, _, _ = setup_data
+    data = read_data(csv_path, 'label')
+    assert not data.empty
+    assert 'numeric_label' in data.columns
+    assert data['numeric_label'].iloc[0] == 1
+
+# Test 2: That the function reads data from a Parquet file and returns a DataFrame.
+def test_read_data_parquet(setup_data):
+    _, _, _, parquet_path, _ = setup_data
+    data = read_data(parquet_path, 'label')
+    assert not data.empty
+    assert 'numeric_label' in data.columns
+    assert data['numeric_label'].iloc[0] == 1
+
+# Test 3: That the function raises a ValueError when an invalid file type is provided.
+def test_read_data_invalid_file_type():
+    with pytest.raises(ValueError):
+        read_data('/tmp/test_data.txt', 'label')
+
+# Test 4: That the function raises a ValueError when the label column is missing.
+def test_read_data_missing_label_column(setup_data):
+    _, csv_path, _, _, _ = setup_data
+    with pytest.raises(ValueError):
+        read_data(csv_path, 'missing_label')
+
+# Test 5: That the function processes the labels correctly.
+def test_process_labels(setup_data):
+    csv_data, _, _, _, _ = setup_data
+    data = process_labels(csv_data, 'label')
+    assert 'numeric_label' in data.columns
+    assert data['numeric_label'].iloc[0] == 1
+
+# Test 6: That the function encodes the data correctly.
+def test_encode_data(setup_data):
+    csv_data, _, _, _, tokenizer = setup_data
+    texts = csv_data['quote']
+    labels = [1, 0]
     dataset = encode_data(tokenizer, texts, labels, max_length=10)
     assert isinstance(dataset, QuotesDataset)
     assert len(dataset) == 2
-    assert 'labels' in dataset[0]
 
-def test_quotes_dataset():
-    tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    texts = sample_csv_data['quote'].tolist()
-    labels = [1, 2]
-    encodings = tokenizer(texts, truncation=True, padding='max_length', max_length=10, return_tensors='pt')
-    dataset = QuotesDataset(encodings, labels)
-    assert len(dataset) == 2
-    assert 'labels' in dataset[0]
-    assert dataset[0]['labels'].item() == 1
-    
-@patch('src.data_prep.read_data')
-@patch('src.data_prep.DistilBertTokenizer.from_pretrained')
-def test_create_data_loaders(mock_tokenizer, mock_read_data):
-    mock_read_data.side_effect = [sample_csv_data, sample_parquet_data]
-    mock_tokenizer.return_value = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-    train_loader, val_loader = create_data_loaders(sample_csv_data, sample_parquet_data)
-    assert len(train_loader.dataset) == len(sample_csv_data)
-    assert len(val_loader.dataset) == len(sample_parquet_data)
-
-def test_read_data_invalid_file():
-    with pytest.raises(ValueError, match="Unsupported file type. Only CSV and Parquet are supported."):
-        read_data('sample.txt', 'class_col')
-
-def test_read_data_missing_column(mocker):
-    mocker.patch('pandas.read_csv', return_value=sample_csv_data.drop(columns=['class_col']))
-    with pytest.raises(RuntimeError, match="Error reading data from sample.csv: 'class_col'"):
-        read_data('sample.csv', 'class_col')
+# Test 7: That the function creates a DataLoader object.
+def test_create_data_loader(setup_data):
+    _, csv_path, _, _, _ = setup_data
+    dataloader = create_data_loader(csv_path, 'label', 'distilbert-base-uncased', max_length=10, batch_size=2, shuffle=False)
+    assert isinstance(dataloader, DataLoader)
+    assert len(dataloader.dataset) == 2

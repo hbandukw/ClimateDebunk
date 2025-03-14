@@ -7,11 +7,25 @@ import torch.nn.utils.prune as prune
 from torch.optim import AdamW, lr_scheduler
 from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, DistilBertConfig
 from data_prep import create_data_loader
-from model import load_model
+from model import load_model_for_finetuning
 from train import train_one_epoch, validate_model
 
 
 def objective(config, hyperoptim_config, trial):
+    """
+    Objective function for hyperparameter optimization.
+    This function defines the objective for hyperparameter optimization using Optuna.
+    It suggests values for various hyperparameters, loads the training and validation data,
+    initializes the model, optimizer, and learning rate scheduler, and trains the model
+    for a specified number of epochs. The function returns the best validation accuracy
+    achieved during training.
+    Args:
+        config (dict): Configuration dictionary containing paths, model parameters, and other settings.
+        hyperoptim_config (dict): Hyperparameter optimization configuration dictionary containing ranges and settings for hyperparameters.
+        trial (optuna.trial.Trial): Optuna trial object used to suggest hyperparameter values.
+    Returns:
+        float: Best validation accuracy achieved during training.
+    """
     learning_rate = trial.suggest_float('learning_rate', *hyperoptim_config['learning_rate']['range'], log=hyperoptim_config['learning_rate']['log'])
     num_trainable_layers = trial.suggest_int('num_trainable_layers', *hyperoptim_config['num_trainable_layers']['range'])
     dropout_rate = trial.suggest_float('dropout_rate', *hyperoptim_config['dropout_rate']['range'])
